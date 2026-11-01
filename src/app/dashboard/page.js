@@ -12,6 +12,8 @@ export default function Dashboard() {
   const [newItemName, setNewItemName] = useState('');
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -54,6 +56,19 @@ export default function Dashboard() {
       alert("Xatolik: " + error.message);
     }
     setAdding(false);
+  };
+
+  const fetchMessages = async (itemId) => {
+    const { data } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('item_id', itemId)
+      .order('created_at', { ascending: false });
+    
+    if (data) {
+      setMessages(data);
+      setSelectedItem(itemId);
+    }
   };
 
   const handleLogout = async () => {
@@ -106,7 +121,6 @@ export default function Dashboard() {
               <div key={item.id} className="p-6 bg-gray-900/50 rounded-2xl border border-gray-800 flex flex-col items-center text-center">
                 <h3 className="text-xl font-bold mb-4">{item.name}</h3>
                 
-                {/* QR KOD */}
                 <div className="bg-white p-2 rounded-xl mb-4">
                   <img 
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://topkey-app.vercel.app/item/${item.id}`} 
@@ -115,20 +129,48 @@ export default function Dashboard() {
                   />
                 </div>
                 
-                <p className="text-xs text-gray-500 mb-4">ID: {item.id.split('-')[0]}...</p>
-                
-                <a 
-                  href={`/item/${item.id}`} 
-                  target="_blank"
-                  className="w-full py-2 bg-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-700 transition"
-                >
-                  Topuvchi sahifasini ko'rish
-                </a>
+                <div className="flex gap-2 w-full mt-2">
+                   <button 
+                    onClick={() => fetchMessages(item.id)}
+                    className="flex-1 py-2 bg-[#007AFF] rounded-lg text-sm font-semibold hover:bg-blue-600 transition"
+                  >
+                    Xabarlar
+                  </button>
+                  <a 
+                    href={`/item/${item.id}`} 
+                    target="_blank"
+                    className="flex-1 py-2 bg-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-600 transition"
+                  >
+                    Sahifa
+                  </a>
+                </div>
               </div>
             ))}
           </div>
         )}
+
+        {selectedItem && (
+          <div className="mt-10 p-6 bg-gray-900 border border-gray-700 rounded-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Kelgan xabarlar</h2>
+              <button onClick={() => setSelectedItem(null)} className="text-gray-400 hover:text-white">Yopish ✕</button>
+            </div>
+            {messages.length === 0 ? (
+              <p className="text-gray-500">Bu buyum bo'yicha hozircha xabarlar yo'q.</p>
+            ) : (
+              <div className="space-y-4">
+                {messages.map((msg) => (
+                  <div key={msg.id} className="p-4 bg-[#031028] rounded-xl border border-gray-800">
+                    <p className="text-gray-300">{msg.content}</p>
+                    <p className="text-xs text-gray-500 mt-2">{new Date(msg.created_at).toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
       </main>
     </div>
   );
-          }
+    }
