@@ -49,7 +49,7 @@ export default function Dashboard() {
 
     if (!error) {
       setNewItemName('');
-      fetchItems(); // Ro'yxatni yangilash
+      fetchItems();
     } else {
       alert("Xatolik: " + error.message);
     }
@@ -75,17 +75,14 @@ export default function Dashboard() {
       </nav>
 
       <main className="max-w-4xl mx-auto p-6 mt-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <h1 className="text-3xl font-bold">Mening buyumlarim</h1>
-        </div>
+        <h1 className="text-3xl font-bold mb-8">Mening buyumlarim</h1>
 
-        {/* Yangi buyum qo'shish formasi */}
         <form onSubmit={handleAddItem} className="mb-8 flex flex-col sm:flex-row gap-4">
           <input
             type="text"
             value={newItemName}
             onChange={(e) => setNewItemName(e.target.value)}
-            placeholder="Buyum nomi (masalan: Uy kalitlari)"
+            placeholder="Yangi buyum nomi (masalan: Uy kalitlari)"
             className="flex-1 px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-[#00E5FF]"
             required
           />
@@ -98,26 +95,35 @@ export default function Dashboard() {
           </button>
         </form>
 
-        {/* Buyumlar ro'yxati */}
         {items.length === 0 ? (
           <div className="text-center py-20 bg-gray-900/30 rounded-2xl border border-gray-800 border-dashed">
             <div className="text-5xl mb-4">📦</div>
             <h2 className="text-xl font-bold mb-2">Hozircha buyumlar yo'q</h2>
-            <p className="text-gray-400 mb-6">Birinchi buyumingizni qo'shing va unga QR kod biriktiring.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item) => (
-              <div key={item.id} className="p-6 bg-gray-900/50 rounded-2xl border border-gray-800 flex flex-col justify-between">
-                <div>
-                  <h3 className="text-xl font-bold mb-2">{item.name}</h3>
-                  <p className="text-sm text-gray-400">ID: {item.id.split('-')[0]}...</p>
+              <div key={item.id} className="p-6 bg-gray-900/50 rounded-2xl border border-gray-800 flex flex-col items-center text-center">
+                <h3 className="text-xl font-bold mb-4">{item.name}</h3>
+                
+                {/* QR KOD */}
+                <div className="bg-white p-2 rounded-xl mb-4">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://topkey-app.vercel.app/item/${item.id}`} 
+                    alt={`QR code for ${item.name}`}
+                    className="w-32 h-32"
+                  />
                 </div>
-                <div className="mt-4 flex gap-2">
-                  <button className="px-4 py-2 bg-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-700 transition text-center flex-1">
-                    QR Kodni ko'rish
-                  </button>
-                </div>
+                
+                <p className="text-xs text-gray-500 mb-4">ID: {item.id.split('-')[0]}...</p>
+                
+                <a 
+                  href={`/item/${item.id}`} 
+                  target="_blank"
+                  className="w-full py-2 bg-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-700 transition"
+                >
+                  Topuvchi sahifasini ko'rish
+                </a>
               </div>
             ))}
           </div>
@@ -125,4 +131,4 @@ export default function Dashboard() {
       </main>
     </div>
   );
-    }
+}
