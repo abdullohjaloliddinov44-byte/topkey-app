@@ -33,14 +33,19 @@ export default function ItemPage() {
     if (!message.trim()) return;
 
     setSending(true);
-    // Hozircha xabarni shunchaki konsolga chiqaramiz
-    console.log("Xabar yuborildi:", message, "Item ID:", id);
     
-    setTimeout(() => {
-      setSending(false);
+    // Xabarni haqiqiy bazaga yozamiz
+    const { error } = await supabase
+      .from('messages')
+      .insert([{ item_id: id, content: message }]);
+
+    if (error) {
+      alert("Xatolik: " + error.message);
+    } else {
       setSent(true);
       setMessage('');
-    }, 1000);
+    }
+    setSending(false);
   };
 
   if (loading) return <div className="min-h-screen bg-[#031028] text-white flex items-center justify-center">Yuklanmoqda...</div>;
@@ -73,7 +78,7 @@ export default function ItemPage() {
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Egasi uchun xabar qoldiring (masalan: Kalitingizni qayerdan topganingizni yozing)..."
+              placeholder="Egasi uchun xabar qoldiring..."
               className="w-full px-4 py-3 bg-[#031028] border border-gray-700 rounded-xl focus:outline-none focus:border-[#00E5FF] min-h-[100px]"
               required
             />
@@ -86,11 +91,7 @@ export default function ItemPage() {
             </button>
           </form>
         )}
-
-        <p className="text-xs text-gray-500 mt-6">
-          Sizning shaxsiy ma'lumotlaringiz (telefon raqamingiz) egasiga ko'rinmaydi.
-        </p>
       </div>
     </div>
   );
-    }
+}
