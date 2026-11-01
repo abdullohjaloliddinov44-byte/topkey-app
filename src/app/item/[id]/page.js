@@ -8,24 +8,34 @@ export default function ItemPage() {
   const { id } = useParams();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
   useEffect(() => {
     const fetchItem = async () => {
+      if (!id) return;
+      
       const { data, error } = await supabase
         .from('items')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
-      if (!error && data) {
+      if (error) {
+        console.error("Bazadan o'qishda xatolik:", error);
+        setError(true);
+      } else if (!data) {
+        console.warn("Bunday ID ga ega buyum topilmadi:", id);
+        setError(true);
+      } else {
         setItem(data);
       }
       setLoading(false);
     };
-    if (id) fetchItem();
+    
+    fetchItem();
   }, [id]);
 
   const handleSendMessage = async (e) => {
@@ -48,7 +58,14 @@ export default function ItemPage() {
   };
 
   if (loading) return <div className="min-h-screen bg-[#031028] text-white flex items-center justify-center">Yuklanmoqda...</div>;
-  if (!item) return <div className="min-h-screen bg-[#031028] text-white flex items-center justify-center">Buyum topilmadi.</div>;
+  
+  if (error || !item) return (
+    <div className="min-h-screen bg-[#031028] text-white flex flex-col items-center justify-center text-center p-6">
+      <div className="text-5xl mb-4">😕</div>
+      <h1 className="text-2xl font-bold mb-2">Buyum topilmadi</h1>
+      <p className="text-gray-400">Bunday ID ga ega buyum tizimda mavjud emas yoki o'chirilgan.</p>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#031028] text-white flex flex-col items-center justify-center p-6">
@@ -77,7 +94,7 @@ export default function ItemPage() {
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Egasi uchun xabar qoldiring..."
+              placeholder="Egasi uchun xabar qoldiring (masalan: Kalitingizni qayerdan topganingizni yozing)..."
               className="w-full px-4 py-3 bg-[#031028] border border-gray-700 rounded-xl focus:outline-none focus:border-[#00E5FF] min-h-[100px]"
               required
             />
@@ -90,6 +107,10 @@ export default function ItemPage() {
             </button>
           </form>
         )}
+
+        <p className="text-xs text-gray-500 mt-6">
+          Sizning shaxsiy ma'lumotlaringiz (telefon raqamingiz) egasiga ko'rinmaydi.
+        </p>
       </div>
     </div>
   );
