@@ -15,6 +15,9 @@ export default function Dashboard() {
   const [messages, setMessages] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [replyText, setReplyText] = useState('');
+  
+  // O'chirish uchun mo'ljallangan holat (State)
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -45,6 +48,23 @@ export default function Dashboard() {
     setAdding(false);
   };
 
+  // Haqiqiy o'chirish funksiyasi (Tasdiqlangandan keyin ishlaydi)
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+
+    const { error } = await supabase.from('items').delete().eq('id', itemToDelete);
+
+    if (error) {
+      alert("O'chirishda xatolik: " + error.message);
+    } else {
+      setItems(items.filter(item => item.id !== itemToDelete));
+      if (selectedItem === itemToDelete) {
+        setSelectedItem(null);
+      }
+    }
+    setItemToDelete(null); // Oynani yopish
+  };
+
   const fetchMessages = async (itemId) => {
     const { data } = await supabase.from('messages').select('*').eq('item_id', itemId).order('created_at', { ascending: true });
     if (data) {
@@ -70,7 +90,7 @@ export default function Dashboard() {
   if (loading) return <div className="min-h-screen bg-[#031028] text-white flex items-center justify-center">Yuklanmoqda...</div>;
 
   return (
-    <div className="min-h-screen bg-[#031028] text-white">
+    <div className="min-h-screen bg-[#031028] text-white relative">
       <nav className="flex justify-between items-center p-6 border-b border-gray-800">
         <div className="text-xl font-bold flex items-center gap-2">
           <span className="text-[#00E5FF]">📍</span> TopKey Kabineti
@@ -88,11 +108,23 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {items.map((item) => (
-            <div key={item.id} className="p-6 bg-gray-900/50 rounded-2xl border border-gray-800 flex flex-col items-center text-center">
-              <h3 className="text-xl font-bold mb-4">{item.name}</h3>
+            <div key={item.id} className="relative p-6 bg-gray-900/50 rounded-2xl border border-gray-800 flex flex-col items-center text-center">
+              
+              {/* O'chirish tugmasi (Savat belgisi) */}
+              <button 
+                onClick={() => setItemToDelete(item.id)} // Bosilganda modal oynasi ochiladi
+                className="absolute top-3 right-3 text-red-500 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 p-2 rounded-lg transition"
+                title="Buyumni o'chirish"
+              >
+                🗑️
+              </button>
+
+              <h3 className="text-xl font-bold mb-4 mt-2">{item.name}</h3>
+              
               <div className="bg-white p-2 rounded-xl mb-4">
                 <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://topkey-app.vercel.app/item/${item.id}`} alt="QR" className="w-32 h-32" />
               </div>
+              
               <div className="flex gap-2 w-full mt-2">
                 <button onClick={() => fetchMessages(item.id)} className="flex-1 py-2 bg-[#007AFF] rounded-lg text-sm font-semibold hover:bg-blue-600">Xabarlar</button>
                 <a href={`/item/${item.id}`} target="_blank" className="flex-1 py-2 bg-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-600">Sahifa</a>
@@ -125,6 +157,36 @@ export default function Dashboard() {
           </div>
         )}
       </main>
+
+      {/* ========================================= */}
+      {/* CHIROYLI TASDIQLASH OYNASI (MODAL) */}
+      {/* ========================================= */}
+      {itemToDelete && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#0b172a] border border-gray-700 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl">
+            <div className="text-5xl mb-4">⚠️</div>
+            <h3 className="text-xl font-bold mb-2">O'chirishni tasdiqlaysizmi?</h3>
+            <p className="text-gray-400 mb-8 text-sm">
+              Haqiqatan ham ushbu buyumni o'chirib tashlamoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setItemToDelete(null)} 
+                className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 rounded-xl font-bold transition"
+              >
+                Yo'q, bekor qilish
+              </button>
+              <button 
+                onClick={confirmDelete} 
+                className="flex-1 py-3 bg-red-600 hover:bg-red-500 rounded-xl font-bold transition shadow-lg shadow-red-900/30"
+              >
+                Ha, o'chirish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
-    }
+}
